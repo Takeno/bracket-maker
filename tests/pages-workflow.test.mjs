@@ -18,6 +18,10 @@ test("grants the permissions required by deploy-pages", () => {
   assert.match(workflow, /id-token:\s+write/);
 });
 
+test("opts official actions into the Node 24 runtime", () => {
+  assert.match(workflow, /FORCE_JAVASCRIPT_ACTIONS_TO_NODE24:\s+true/);
+});
+
 test("tests and publishes only the static site artifact", () => {
   assert.match(workflow, /node --test tests\/bracket-html\.test\.mjs/);
   assert.match(workflow, /cp index\.html _site\/index\.html/);
