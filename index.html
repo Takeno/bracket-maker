@@ -1,0 +1,622 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bracket 8 giocatori</title>
+  <style>
+    :root {
+      --ink: #151515;
+      --muted: #5f6b67;
+      --panel: #f4f7f5;
+      --paper: #ffffff;
+      --accent: #0f766e;
+      --border: #cbd5d1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #e7ece9;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 24px;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .editor-panel {
+      position: sticky;
+      top: 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--paper);
+      padding: 16px;
+      box-shadow: 0 12px 32px rgba(21, 21, 21, 0.08);
+    }
+
+    .editor-panel h1 {
+      margin: 0 0 14px;
+      font-size: 20px;
+      line-height: 1.2;
+    }
+
+    .language-row {
+      display: grid;
+      grid-template-columns: 1fr 84px;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .language-row select {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 8px;
+      font: inherit;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .participant-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .input-row span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 34px;
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .input-row input {
+      width: 100%;
+      height: 38px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0 10px;
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .input-row input:focus {
+      border-color: var(--accent);
+      outline: 2px solid rgba(15, 118, 110, 0.18);
+      outline-offset: 1px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 0 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      border-color: var(--border);
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    .preview-area {
+      display: flex;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .sheet {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1188px);
+      aspect-ratio: 297 / 210;
+      min-height: 0;
+      border: 1px solid var(--border);
+      background: var(--paper);
+      padding: 26px 30px;
+      box-shadow: 0 18px 42px rgba(21, 21, 21, 0.16);
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 9px;
+      margin-bottom: 14px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .sheet-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .bracket-area {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .round-label {
+      position: absolute;
+      top: 0;
+      width: var(--w);
+      left: var(--x);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .slot {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      display: flex;
+      align-items: center;
+      width: var(--w);
+      min-height: 7.2%;
+      transform: translateY(-50%);
+      border: 2px solid var(--ink);
+      background: #ffffff;
+      padding: 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.15;
+      overflow: hidden;
+    }
+
+    .slot .seed {
+      flex: 0 0 24px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .slot .player-name,
+    .slot .placeholder {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .slot.empty {
+      color: transparent;
+    }
+
+    .line {
+      position: absolute;
+      background: var(--ink);
+    }
+
+    .line.h {
+      left: var(--x);
+      top: var(--y);
+      width: var(--w);
+      height: 2px;
+      transform: translateY(-50%);
+    }
+
+    .line.v {
+      left: var(--x);
+      top: var(--y);
+      width: 2px;
+      height: var(--h);
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+        padding: 12px;
+      }
+
+      .editor-panel {
+        position: static;
+      }
+
+      .sheet {
+        padding: 18px;
+      }
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+
+    @media print {
+      .editor-panel {
+        display: none !important;
+      }
+
+      html,
+      body {
+        width: 297mm;
+        height: 210mm;
+        margin: 0;
+        background: #ffffff;
+      }
+
+      .app-shell {
+        display: block;
+        width: 297mm;
+        height: 210mm;
+        min-height: 0;
+        padding: 0;
+      }
+
+      .preview-area {
+        display: block;
+        width: 297mm;
+        height: 210mm;
+      }
+
+      .sheet {
+        width: 297mm;
+        height: 210mm;
+        max-width: none;
+        aspect-ratio: auto;
+        border: 0;
+        box-shadow: none;
+        padding: 8mm 10mm;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        page-break-inside: avoid;
+      }
+
+      .sheet-title {
+        font-size: 23pt;
+      }
+
+      .sheet-subtitle,
+      .round-label {
+        color: #000000;
+      }
+
+      .round-label {
+        font-size: 8.5pt;
+      }
+
+      .slot {
+        border-width: 1pt;
+        font-size: 10.5pt;
+      }
+
+      .slot .seed {
+        font-size: 8pt;
+      }
+
+      .line.h {
+        height: 1pt;
+      }
+
+      .line.v {
+        width: 1pt;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="editor-panel" aria-label="Partecipanti">
+      <h1 data-i18n="participants">Partecipanti</h1>
+      <label class="language-row" for="language-select">
+        <span data-i18n="language">Lingua</span>
+        <select id="language-select" aria-label="Lingua">
+          <option value="it">it</option>
+          <option value="en">en</option>
+          <option value="fr">fr</option>
+          <option value="es">es</option>
+          <option value="de">de</option>
+        </select>
+      </label>
+      <div class="participant-list">
+        <label class="input-row" for="player-1">
+          <span>1</span>
+          <input id="player-1" data-player-input="1" type="text" value="Giocatore 1">
+        </label>
+        <label class="input-row" for="player-2">
+          <span>2</span>
+          <input id="player-2" data-player-input="2" type="text" value="Giocatore 2">
+        </label>
+        <label class="input-row" for="player-3">
+          <span>3</span>
+          <input id="player-3" data-player-input="3" type="text" value="Giocatore 3">
+        </label>
+        <label class="input-row" for="player-4">
+          <span>4</span>
+          <input id="player-4" data-player-input="4" type="text" value="Giocatore 4">
+        </label>
+        <label class="input-row" for="player-5">
+          <span>5</span>
+          <input id="player-5" data-player-input="5" type="text" value="Giocatore 5">
+        </label>
+        <label class="input-row" for="player-6">
+          <span>6</span>
+          <input id="player-6" data-player-input="6" type="text" value="Giocatore 6">
+        </label>
+        <label class="input-row" for="player-7">
+          <span>7</span>
+          <input id="player-7" data-player-input="7" type="text" value="Giocatore 7">
+        </label>
+        <label class="input-row" for="player-8">
+          <span>8</span>
+          <input id="player-8" data-player-input="8" type="text" value="Giocatore 8">
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" onclick="window.print()" data-i18n="print">Stampa</button>
+        <button class="secondary" type="button" id="clearPlayers" data-i18n="clear">Svuota</button>
+      </div>
+    </aside>
+
+    <section class="preview-area" aria-label="Anteprima bracket">
+      <article class="sheet">
+        <header class="sheet-header">
+          <h2 class="sheet-title" data-i18n="title">Bracket 8 giocatori</h2>
+          <div class="sheet-subtitle" data-i18n="subtitle">Eliminazione diretta</div>
+        </header>
+
+        <div class="bracket-area" aria-label="Tabellone">
+          <div class="round-label" style="--x: 0%; --w: 22%;" data-i18n="quarterfinals">Quarti</div>
+          <div class="round-label" style="--x: 33%; --w: 21%;" data-i18n="semifinals">Semifinali</div>
+          <div class="round-label" style="--x: 60%; --w: 18%;" data-i18n="final">Finale</div>
+          <div class="round-label" style="--x: 84%; --w: 16%;" data-i18n="champion">Campione</div>
+
+          <div class="slot" style="--x: 0%; --y: 14%; --w: 22%;" data-seed="1">
+            <span class="seed">1</span>
+            <span class="player-name">Giocatore 1</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 25%; --w: 22%;" data-seed="5">
+            <span class="seed">5</span>
+            <span class="player-name">Giocatore 5</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 36%; --w: 22%;" data-seed="3">
+            <span class="seed">3</span>
+            <span class="player-name">Giocatore 3</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 47%; --w: 22%;" data-seed="7">
+            <span class="seed">7</span>
+            <span class="player-name">Giocatore 7</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 58%; --w: 22%;" data-seed="2">
+            <span class="seed">2</span>
+            <span class="player-name">Giocatore 2</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 69%; --w: 22%;" data-seed="6">
+            <span class="seed">6</span>
+            <span class="player-name">Giocatore 6</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 80%; --w: 22%;" data-seed="4">
+            <span class="seed">4</span>
+            <span class="player-name">Giocatore 4</span>
+          </div>
+          <div class="slot" style="--x: 0%; --y: 91%; --w: 22%;" data-seed="8">
+            <span class="seed">8</span>
+            <span class="player-name">Giocatore 8</span>
+          </div>
+
+          <div class="slot empty" style="--x: 33%; --y: 19.5%; --w: 21%;"><span class="placeholder">&nbsp;</span></div>
+          <div class="slot empty" style="--x: 33%; --y: 41.5%; --w: 21%;"><span class="placeholder">&nbsp;</span></div>
+          <div class="slot empty" style="--x: 33%; --y: 63.5%; --w: 21%;"><span class="placeholder">&nbsp;</span></div>
+          <div class="slot empty" style="--x: 33%; --y: 85.5%; --w: 21%;"><span class="placeholder">&nbsp;</span></div>
+
+          <div class="slot empty" style="--x: 60%; --y: 30.5%; --w: 18%;"><span class="placeholder">&nbsp;</span></div>
+          <div class="slot empty" style="--x: 60%; --y: 74.5%; --w: 18%;"><span class="placeholder">&nbsp;</span></div>
+
+          <div class="slot empty" style="--x: 84%; --y: 52.5%; --w: 16%;"><span class="placeholder">&nbsp;</span></div>
+
+          <div class="line h" style="--x: 22%; --y: 14%; --w: 5.5%;"></div>
+          <div class="line h" style="--x: 22%; --y: 25%; --w: 5.5%;"></div>
+          <div class="line v" style="--x: 27.5%; --y: 14%; --h: 11%;"></div>
+          <div class="line h" style="--x: 27.5%; --y: 19.5%; --w: 5.5%;"></div>
+
+          <div class="line h" style="--x: 22%; --y: 36%; --w: 5.5%;"></div>
+          <div class="line h" style="--x: 22%; --y: 47%; --w: 5.5%;"></div>
+          <div class="line v" style="--x: 27.5%; --y: 36%; --h: 11%;"></div>
+          <div class="line h" style="--x: 27.5%; --y: 41.5%; --w: 5.5%;"></div>
+
+          <div class="line h" style="--x: 22%; --y: 58%; --w: 5.5%;"></div>
+          <div class="line h" style="--x: 22%; --y: 69%; --w: 5.5%;"></div>
+          <div class="line v" style="--x: 27.5%; --y: 58%; --h: 11%;"></div>
+          <div class="line h" style="--x: 27.5%; --y: 63.5%; --w: 5.5%;"></div>
+
+          <div class="line h" style="--x: 22%; --y: 80%; --w: 5.5%;"></div>
+          <div class="line h" style="--x: 22%; --y: 91%; --w: 5.5%;"></div>
+          <div class="line v" style="--x: 27.5%; --y: 80%; --h: 11%;"></div>
+          <div class="line h" style="--x: 27.5%; --y: 85.5%; --w: 5.5%;"></div>
+
+          <div class="line h" style="--x: 54%; --y: 19.5%; --w: 4%;"></div>
+          <div class="line h" style="--x: 54%; --y: 41.5%; --w: 4%;"></div>
+          <div class="line v" style="--x: 58%; --y: 19.5%; --h: 22%;"></div>
+          <div class="line h" style="--x: 58%; --y: 30.5%; --w: 2%;"></div>
+
+          <div class="line h" style="--x: 54%; --y: 63.5%; --w: 4%;"></div>
+          <div class="line h" style="--x: 54%; --y: 85.5%; --w: 4%;"></div>
+          <div class="line v" style="--x: 58%; --y: 63.5%; --h: 22%;"></div>
+          <div class="line h" style="--x: 58%; --y: 74.5%; --w: 2%;"></div>
+
+          <div class="line h" style="--x: 78%; --y: 30.5%; --w: 3%;"></div>
+          <div class="line h" style="--x: 78%; --y: 74.5%; --w: 3%;"></div>
+          <div class="line v" style="--x: 81%; --y: 30.5%; --h: 44%;"></div>
+          <div class="line h" style="--x: 81%; --y: 52.5%; --w: 3%;"></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const inputs = Array.from(document.querySelectorAll("[data-player-input]"));
+    const languageSelect = document.getElementById("language-select");
+    const translations = {
+      it: {
+        title: "Bracket 8 giocatori",
+        participants: "Partecipanti",
+        language: "Lingua",
+        subtitle: "Eliminazione diretta",
+        quarterfinals: "Quarti",
+        semifinals: "Semifinali",
+        final: "Finale",
+        champion: "Campione",
+        print: "Stampa",
+        clear: "Svuota",
+        player: "Giocatore"
+      },
+      en: {
+        title: "8-player bracket",
+        participants: "Participants",
+        language: "Language",
+        subtitle: "Single elimination",
+        quarterfinals: "Quarterfinals",
+        semifinals: "Semifinals",
+        final: "Final",
+        champion: "Champion",
+        print: "Print",
+        clear: "Clear",
+        player: "Player"
+      },
+      fr: {
+        title: "Tableau 8 joueurs",
+        participants: "Participants",
+        language: "Langue",
+        subtitle: "Elimination directe",
+        quarterfinals: "Quarts",
+        semifinals: "Demi-finales",
+        final: "Finale",
+        champion: "Champion",
+        print: "Imprimer",
+        clear: "Vider",
+        player: "Joueur"
+      },
+      es: {
+        title: "Cuadro 8 jugadores",
+        participants: "Participantes",
+        language: "Idioma",
+        subtitle: "Eliminacion directa",
+        quarterfinals: "Cuartos",
+        semifinals: "Semifinales",
+        final: "Final",
+        champion: "Campeon",
+        print: "Imprimir",
+        clear: "Vaciar",
+        player: "Jugador"
+      },
+      de: {
+        title: "Turnierbaum 8 Spieler",
+        participants: "Teilnehmer",
+        language: "Sprache",
+        subtitle: "K.-o.-System",
+        quarterfinals: "Viertelfinale",
+        semifinals: "Halbfinale",
+        final: "Finale",
+        champion: "Sieger",
+        print: "Drucken",
+        clear: "Leeren",
+        player: "Spieler"
+      }
+    };
+
+    function defaultPlayerName(language, seed) {
+      return `${translations[language].player} ${seed}`;
+    }
+
+    function isDefaultPlayerName(value, seed) {
+      return Object.keys(translations).some((language) => (
+        value === defaultPlayerName(language, seed)
+      ));
+    }
+
+    function updateBracket() {
+      inputs.forEach((input) => {
+        const seed = input.dataset.playerInput;
+        const output = document.querySelector(`[data-seed="${seed}"] .player-name`);
+        const value = input.value.trim();
+        output.textContent = value;
+      });
+    }
+
+    function applyLanguage(language) {
+      const copy = translations[language] || translations.it;
+      document.documentElement.lang = language;
+      document.title = copy.title;
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        element.textContent = copy[element.dataset.i18n];
+      });
+
+      inputs.forEach((input) => {
+        const seed = input.dataset.playerInput;
+        if (isDefaultPlayerName(input.value.trim(), seed)) {
+          input.value = defaultPlayerName(language, seed);
+        }
+      });
+
+      updateBracket();
+    }
+
+    inputs.forEach((input) => {
+      input.addEventListener("input", updateBracket);
+    });
+
+    languageSelect.addEventListener("change", () => {
+      applyLanguage(languageSelect.value);
+    });
+
+    document.getElementById("clearPlayers").addEventListener("click", () => {
+      inputs.forEach((input) => {
+        input.value = "";
+      });
+      updateBracket();
+    });
+
+    applyLanguage(languageSelect.value);
+  </script>
+</body>
+</html>
