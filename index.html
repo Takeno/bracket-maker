@@ -114,6 +114,7 @@
 
     .actions {
       display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       margin-top: 14px;
     }
@@ -400,6 +401,7 @@
       </div>
       <div class="actions">
         <button type="button" onclick="window.print()" data-i18n="print">Stampa</button>
+        <button class="secondary" type="button" id="randomizePlayers" data-i18n="randomize">Randomize</button>
         <button class="secondary" type="button" id="clearPlayers" data-i18n="clear">Svuota</button>
       </div>
     </aside>
@@ -520,6 +522,7 @@
         final: "Finale",
         champion: "Campione",
         print: "Stampa",
+        randomize: "Randomize",
         clear: "Svuota",
         player: "Giocatore"
       },
@@ -534,6 +537,7 @@
         final: "Final",
         champion: "Champion",
         print: "Print",
+        randomize: "Randomize",
         clear: "Clear",
         player: "Player"
       },
@@ -548,6 +552,7 @@
         final: "Finale",
         champion: "Champion",
         print: "Imprimer",
+        randomize: "Melanger",
         clear: "Vider",
         player: "Joueur"
       },
@@ -562,6 +567,7 @@
         final: "Final",
         champion: "Campeon",
         print: "Imprimir",
+        randomize: "Aleatorio",
         clear: "Vaciar",
         player: "Jugador"
       },
@@ -576,6 +582,7 @@
         final: "Finale",
         champion: "Sieger",
         print: "Drucken",
+        randomize: "Mischen",
         clear: "Leeren",
         player: "Spieler"
       }
@@ -611,6 +618,24 @@
       updateBracket();
     }
 
+    function shuffleValues(values) {
+      const shuffled = [...values];
+      for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const randomIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+      }
+      return shuffled;
+    }
+
+    function randomizePlayers() {
+      const values = inputs.map((input) => input.value);
+      const shuffled = shuffleValues(values);
+      inputs.forEach((input, index) => {
+        input.value = shuffled[index];
+      });
+      updateBracket();
+    }
+
     function applyLanguage(language) {
       const copy = translations[language] || translations.it;
       document.documentElement.lang = language;
@@ -640,6 +665,8 @@
     bracketModeSelect.addEventListener("change", () => {
       applyBracketMode(bracketModeSelect.value);
     });
+
+    document.getElementById("randomizePlayers").addEventListener("click", randomizePlayers);
 
     document.getElementById("clearPlayers").addEventListener("click", () => {
       inputs.forEach((input) => {

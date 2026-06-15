@@ -66,6 +66,20 @@ test("includes a print command and live bracket update script", () => {
   assert.match(html, /function updateBracket\(\)/);
 });
 
+test("provides a randomize button wired to participant shuffling", () => {
+  assert.match(html, /id="randomizePlayers"/);
+  assert.match(html, /data-i18n="randomize"/);
+  assert.match(html, /function shuffleValues\(/);
+  assert.match(html, /function randomizePlayers\(/);
+  assert.match(html, /randomizePlayers"\)\.addEventListener\("click", randomizePlayers\)/);
+});
+
+test("randomize preserves all eight input values and updates the bracket", () => {
+  assert.match(html, /const values = inputs\.map\(\(input\) => input\.value\)/);
+  assert.match(html, /inputs\.forEach\(\(input, index\) => {\s*input\.value = shuffled\[index\];\s*}\);/s);
+  assert.match(html, /randomizePlayers\(\) {[\s\S]*updateBracket\(\);[\s\S]*}/);
+});
+
 test("inline script has valid JavaScript syntax", () => {
   const script = html.match(/<script>([\s\S]*)<\/script>/)?.[1];
   assert.ok(script);
