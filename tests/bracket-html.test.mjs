@@ -23,6 +23,20 @@ test("orders first-round bracket seeds top to bottom", () => {
   assert.deepEqual(firstRound, [1, 5, 3, 7, 2, 6, 4, 8]);
 });
 
+test("provides a bracket mode dropdown with requested options", () => {
+  const select = html.match(/<select[^>]*id="bracket-mode-select"[\s\S]*?<\/select>/)?.[0];
+  assert.ok(select);
+
+  assert.match(select, /<option value="draft-pod">Draft pod<\/option>/);
+  assert.match(select, /<option value="direct-elimination">Tournament Direct Elimination<\/option>/);
+});
+
+test("defines bracket seed orders for each mode", () => {
+  assert.match(html, /draft-pod":\s*\[1,\s*5,\s*3,\s*7,\s*2,\s*6,\s*4,\s*8\]/);
+  assert.match(html, /direct-elimination":\s*\[1,\s*8,\s*4,\s*5,\s*3,\s*6,\s*2,\s*7\]/);
+  assert.match(html, /function applyBracketMode\(/);
+});
+
 test("uses A4 landscape print sizing and hides editing controls for print", () => {
   assert.match(html, /@page\s*{[^}]*size:\s*A4 landscape;/s);
   assert.match(html, /@media print\s*{[^}]*\.editor-panel\s*{[^}]*display:\s*none/s);

@@ -51,7 +51,7 @@
 
     .language-row {
       display: grid;
-      grid-template-columns: 1fr 84px;
+      grid-template-columns: 82px minmax(0, 1fr);
       align-items: center;
       gap: 10px;
       margin-bottom: 14px;
@@ -70,7 +70,6 @@
       padding: 0 8px;
       font: inherit;
       font-weight: 700;
-      text-transform: uppercase;
     }
 
     .participant-list {
@@ -358,6 +357,13 @@
           <option value="de">de</option>
         </select>
       </label>
+      <label class="language-row" for="bracket-mode-select">
+        <span data-i18n="mode">Formato</span>
+        <select id="bracket-mode-select" aria-label="Formato bracket">
+          <option value="draft-pod">Draft pod</option>
+          <option value="direct-elimination">Tournament Direct Elimination</option>
+        </select>
+      </label>
       <div class="participant-list">
         <label class="input-row" for="player-1">
           <span>1</span>
@@ -496,11 +502,18 @@
   <script>
     const inputs = Array.from(document.querySelectorAll("[data-player-input]"));
     const languageSelect = document.getElementById("language-select");
+    const bracketModeSelect = document.getElementById("bracket-mode-select");
+    const bracketSlots = Array.from(document.querySelectorAll(".slot[data-seed]"));
+    const bracketOrders = {
+      "draft-pod": [1, 5, 3, 7, 2, 6, 4, 8],
+      "direct-elimination": [1, 8, 4, 5, 3, 6, 2, 7]
+    };
     const translations = {
       it: {
         title: "Bracket 8 giocatori",
         participants: "Partecipanti",
         language: "Lingua",
+        mode: "Formato",
         subtitle: "Eliminazione diretta",
         quarterfinals: "Quarti",
         semifinals: "Semifinali",
@@ -514,6 +527,7 @@
         title: "8-player bracket",
         participants: "Participants",
         language: "Language",
+        mode: "Format",
         subtitle: "Single elimination",
         quarterfinals: "Quarterfinals",
         semifinals: "Semifinals",
@@ -527,6 +541,7 @@
         title: "Tableau 8 joueurs",
         participants: "Participants",
         language: "Langue",
+        mode: "Format",
         subtitle: "Elimination directe",
         quarterfinals: "Quarts",
         semifinals: "Demi-finales",
@@ -540,6 +555,7 @@
         title: "Cuadro 8 jugadores",
         participants: "Participantes",
         language: "Idioma",
+        mode: "Formato",
         subtitle: "Eliminacion directa",
         quarterfinals: "Cuartos",
         semifinals: "Semifinales",
@@ -553,6 +569,7 @@
         title: "Turnierbaum 8 Spieler",
         participants: "Teilnehmer",
         language: "Sprache",
+        mode: "Format",
         subtitle: "K.-o.-System",
         quarterfinals: "Viertelfinale",
         semifinals: "Halbfinale",
@@ -583,6 +600,17 @@
       });
     }
 
+    function applyBracketMode(mode) {
+      const order = bracketOrders[mode] || bracketOrders["draft-pod"];
+      bracketSlots.forEach((slot, index) => {
+        const seed = String(order[index]);
+        slot.dataset.seed = seed;
+        slot.querySelector(".seed").textContent = seed;
+      });
+
+      updateBracket();
+    }
+
     function applyLanguage(language) {
       const copy = translations[language] || translations.it;
       document.documentElement.lang = language;
@@ -609,6 +637,10 @@
       applyLanguage(languageSelect.value);
     });
 
+    bracketModeSelect.addEventListener("change", () => {
+      applyBracketMode(bracketModeSelect.value);
+    });
+
     document.getElementById("clearPlayers").addEventListener("click", () => {
       inputs.forEach((input) => {
         input.value = "";
@@ -617,6 +649,7 @@
     });
 
     applyLanguage(languageSelect.value);
+    applyBracketMode(bracketModeSelect.value);
   </script>
 </body>
 </html>
